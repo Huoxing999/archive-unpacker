@@ -1,0 +1,29 @@
+# 依赖与编译产物
+node_modules/
+dist/
+
+# 打包产物
+release/
+
+# 个人配置（含候选密码，绝不进公开仓库）
+personal-settings.json
+
+# 日志与临时文件
+*.log
+_*.txt
+_*.py
+verify-*.txt
+verify-run.txt
+verify-run.log
+
+# 系统文件
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 快捷方式（指向本机路径，不必入库）
+*.lnk
+
+# 编辑器
+.vscode/
+.idea/
