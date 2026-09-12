@@ -1298,6 +1298,60 @@ async function main() {
       JSON.stringify(del16c.deletedFiles),
     );
     check('16.3 记录了改名来源', del16c.renamedFrom === collide16c, del16c.renamedFrom);
+
+    /* ===== 17. 单链多层壳下钻（M5170 型）===== */
+    section('17. 单链多层壳：沿唯一子目录链下钻找成品');
+    // 复刻 M5170 案例：第二次解压的输出目录里，一路每层只有 1 个子目录，
+    // 成品藏在最内层的「多项目录」里；阈值(48>3)不能再抢先收手。
+    const chainBase = path.join(work, 'yscs2');
+    const chainOut = path.join(chainBase, 'M5170', 'M5170');
+    const chainInner = path.join(chainOut, 'M5170', '巨乳性奴会長', '巨乳性奴会長');
+    fs.mkdirSync(chainInner, { recursive: true });
+    fs.writeFileSync(path.join(chainInner, 'CONFIG.exe'), 'exe');
+    fs.writeFileSync(path.join(chainInner, 'data.pac'), 'pac');
+    fs.mkdirSync(path.join(chainInner, 'dll'), { recursive: true });
+    fs.writeFileSync(path.join(chainInner, 'dll', 'ogg.dll'), 'dll');
+
+    const chainScan = await analyzeNested(
+      null,
+      analyzeRequest(chainOut, { parentFileCount: 48, depth: 2 }),
+    );
+    check(
+      '17.1 单链下钻直达最内层多项目录（阈值 48 不再抢先收手）',
+      chainScan.finishedFolder === chainInner && chainScan.stopReason === '',
+      `${chainScan.finishedFolder || '（空）'} / ${chainScan.stopReason}`,
+    );
+    check(
+      '17.2 说明里写明了下钻层数',
+      chainScan.notes.some((note) => /下钻 \d+ 层/.test(note)),
+      JSON.stringify(chainScan.notes),
+    );
+
+    // 搬运 + 清空壳链（成品搬到源目录 yscs2，M5170\M5170\M5170\巨乳 一路空壳全清）
+    const chainHoist = await hoistFinished(null, { folder: chainInner, targetRoot: chainBase });
+    check('17.3 成品搬到源目录', chainHoist.ok === true, chainHoist.error);
+    check(
+      '17.4 落点就是 yscs2\\巨乳性奴会長',
+      fs.existsSync(path.join(chainBase, '巨乳性奴会長', 'CONFIG.exe')),
+    );
+    check(
+      '17.5 整条空壳链被清掉（4 层）',
+      chainHoist.removedDirs.length >= 4 && !fs.existsSync(path.join(chainBase, 'M5170')),
+      JSON.stringify(chainHoist.removedDirs),
+    );
+
+    // 反面对照：链上混入一个文件 → 不再下钻（防止误搬正常深层目录）
+    const mixedDir = path.join(work, 'yscs3', 'game');
+    const mixedInner = path.join(mixedDir, 'save');
+    fs.mkdirSync(mixedInner, { recursive: true });
+    fs.writeFileSync(path.join(mixedInner, 'slot1.dat'), 'save');
+    fs.writeFileSync(path.join(mixedDir, 'readme.txt'), 'mixed file blocks the drill');
+    const mixedScan = await analyzeNested(null, analyzeRequest(mixedDir, { parentFileCount: 5, depth: 1 }));
+    check(
+      '17.6 链上混入文件就不下钻（散装判定搬的是顶层目录，绝不会误搬更深层的 save）',
+      mixedScan.finishedFolder === path.resolve(mixedDir) && mixedScan.finishedFolder !== path.resolve(mixedInner),
+      mixedScan.finishedFolder || '（空）',
+    );
   } finally {
     try {
       fs.rmSync(work, { recursive: true, force: true });
