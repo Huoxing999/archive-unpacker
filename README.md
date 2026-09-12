@@ -228,19 +228,6 @@ npm run verify
 
 Windows 上也可以直接双击项目里的 `启动解压工具.bat`，它会检查 Node.js 与依赖并启动。
 
-### 其他脚本
-
-```bash
-# 对真实目录复现「嵌套判定链」，看程序为什么会/不会继续解
-npm run diagnose -- "F:\yscs" 8 3 0
-
-# 沙盒演示「解到头 → 搬成品 → 清空壳」（不启动界面）
-npm run demo:hoist
-
-# 调查一个 .lz4 文件里到底是什么
-npm run probe:lz4 -- "F:\yscs\a.lz4"
-```
-
 ---
 
 ## 打包成 exe
