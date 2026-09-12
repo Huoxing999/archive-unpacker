@@ -1,0 +1,50 @@
+{
+    "name": "archive-unpacker",
+    "version": "0.1.0",
+    "private": true,
+    "description": "A clean desktop tool for batch extracting archives with multiple candidate passwords.",
+    "main": "dist/main.js",
+    "scripts": {
+        "build": "tsc -p tsconfig.main.json && tsc -p tsconfig.renderer.json",
+        "start": "npm run build && node scripts/run-electron.cjs .",
+        "check": "tsc -p tsconfig.main.json --noEmit && tsc -p tsconfig.renderer.json --noEmit",
+        "verify": "npm run build && node scripts/verify-depth.cjs",
+        "diagnose": "npm run build && node scripts/diagnose-nested.cjs",
+        "demo:hoist": "npm run build && node scripts/demo-hoist.cjs",
+        "probe:lz4": "npm run build && node scripts/probe-lz4.cjs",
+        "pack": "npm run build && electron-builder --win portable --x64"
+    },
+    "build": {
+        "appId": "com.hehesama.archiveunpacker",
+        "productName": "ArchiveUnpacker",
+        "directories": {
+            "output": "release"
+        },
+        "files": [
+            "dist/**/*",
+            "src/renderer/**/*",
+            "build/icon.ico",
+            "personal-settings.json",
+            "package.json"
+        ],
+        "win": {
+            "icon": "build/icon.ico",
+            "target": [
+                {
+                    "target": "portable",
+                    "arch": [
+                        "x64"
+                    ]
+                }
+            ]
+        },
+        "portable": {
+            "artifactName": "批量解压工具.exe"
+        }
+    },
+    "devDependencies": {
+        "electron": "^44.3.0",
+        "electron-builder": "^26.15.3",
+        "typescript": "^5.7.2"
+    }
+}
