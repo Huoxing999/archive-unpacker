@@ -9,7 +9,7 @@
  *   2. 嵌套解压判定 —— 文件数未超阈值才继续解
  *   3. 阈值可配置 —— 同一个目录，改阈值结果就变
  *   4. 正常文件永不被碰 —— jpg/pdf/mp4 被 7-Zip 挡掉；伪装后缀即使是真包也不自动追
- *   5. 层数护栏 —— 到内部上限就收手
+ *   5. 文件数阈值 —— 超过就收手（唯一的全局收手条件）
  *   6. 解压成功后才改名 —— 误判的正常文件失败后保持原文件名
  *   7. 解压后删除源压缩包 —— 成功才删 / 关闭保留 / 失败不删 / 分卷一起删
  *   8. 进度上报 —— extract-progress 事件单调递增
@@ -433,12 +433,16 @@ async function main() {
       names(realPdf.follow).join(', ') || '（空）',
     );
 
-    // 层数护栏优先于单文件规则
+    // 层数护栏已移除：任意深度的单文件规则都放行
     const deepShell = await analyzeNested(
       null,
       analyzeRequest(out5, { parentFileCount: 1, disguisedExtensions: userDisguised, depth: 3 }),
     );
-    check('到层数上限时，单文件规则也不放行', deepShell.follow.length === 0 && deepShell.stopReason.length > 0, deepShell.stopReason);
+    check(
+      '任意深度，单文件规则都放行（护栏已取消）',
+      JSON.stringify(names(deepShell.follow)) === JSON.stringify(['2026S92S3.tif']) && deepShell.stopReason === '',
+      `${names(deepShell.follow).join(', ') || '（空）'} / ${deepShell.stopReason}`,
+    );
 
     /* ===== 6. 解到头：成品搬回源目录 + 清掉空目录外壳 ===== */
     section('6. 解到头：成品搬回源目录，并清掉空目录外壳');
@@ -528,11 +532,14 @@ async function main() {
       (await hoistFinished(null, { folder: path.join(work, 'ghost'), targetRoot: srcRoot2 })).ok === false,
     );
 
-    /* ===== 7. 层数护栏 ===== */
-    section('7. 层数护栏');
+    /* ===== 7. 深度不受限（层数护栏已移除）===== */
+    section('7. 深度不受限（层数护栏已移除）');
     const deepScan = await analyzeNested(null, analyzeRequest(out2, { depth: 3 }));
-    check('深度到 3 就收手', deepScan.follow.length === 0 && deepScan.stopReason.length > 0, deepScan.stopReason);
-    check('说明里提到层数上限', /层/.test(deepScan.stopReason), deepScan.stopReason);
+    check(
+      '深度 3 的散装目录 → 判定为成品（不再被护栏抢先收手）',
+      deepScan.finishedFolder === out2 && deepScan.stopReason === '',
+      `${deepScan.finishedFolder || '（空）'} / ${deepScan.stopReason}`,
+    );
 
     /* ===== 8. 改名时机（失败不改名，保护正常文件） ===== */
     section('8. 改名时机');
