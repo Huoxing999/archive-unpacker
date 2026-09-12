@@ -638,12 +638,6 @@ async function scanFolder(request: ScanRequest): Promise<ScanResult> {
 const NESTED_FILE_THRESHOLD_DEFAULT = 3;
 const NESTED_FILE_THRESHOLD_MAX = 999;
 
-/**
- * 内部层数护栏：自动追嵌套包最多 3 层。
- * 这是程序自己的安全网（防自我复制的壳无限套娃），不是给用户调的参数。
- */
-const NESTED_MAX_DEPTH = 3;
-
 function clampNestedFileThreshold(value: unknown): number {
   const parsed = typeof value === 'number' ? value : Number.parseInt(String(value ?? ''), 10);
   if (!Number.isFinite(parsed) || parsed < 1) return NESTED_FILE_THRESHOLD_DEFAULT;
@@ -955,13 +949,8 @@ async function analyzeNestedArchives(request: NestedAnalyzeRequest): Promise<Nes
     }
   }
 
-  // 2) 内部层数护栏
-  if (request.depth >= NESTED_MAX_DEPTH) {
-    return {
-      ...empty(),
-      stopReason: `已经解到第 ${request.depth} 层，达到自动解压上限（${NESTED_MAX_DEPTH} 层）`,
-    };
-  }
+  // 层数护栏已按用户要求移除：多深的链都继续解。
+  // 停下来的兜底仍是后面几条：散装/套壳成品判定、文件数阈值、严格扫描。
 
   // 2.5) 成品判定·散装形态：输出目录里**直接**就有不止一项。
   //      上面的第 1 步认的是「1 个壳文件夹包着成品」（BARE＆BUNNY 型）；
