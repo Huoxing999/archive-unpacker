@@ -904,22 +904,24 @@ async function hoistFinishedFolder(request: HoistRequest): Promise<HoistResult> 
  * 解压完一层后，判断输出目录里还有哪些包「确实需要继续解」。
  *
  * 判定顺序：
- *  1. **成品判定**（只在套壳链里，即深度 ≥ 1）：输出目录里只有 1 个文件夹、
+ *  1. **成品判定·套壳形态**（任何深度都做，含最外层）：输出目录里只有 1 个文件夹、
  *     且那个文件夹里不止一个东西 → 这就是解到头的成品，不再往下解，
  *     交给渲染层把它搬回源目录（见 `hoistFinishedFolder`）。
- *  2. 层数护栏：内部最多 3 层（安全网，不给用户调）。
- *  2.5 **成品判定·散装形态**（同样深度 ≥ 1，护栏之后）：输出目录里直接就有不止一项
+ *     若那个文件夹里又恰好只有 1 个子目录（纯目录单链），沿链下钻，
+ *     直钻到第一个「多项目录」判成品（M5170 型多层壳）。
+ *  1.5 **成品判定·散装形态**（深度 ≥ 1）：输出目录里直接就有不止一项
  *     （A41 型：最后一层包的根下散着 存档/游戏文件夹，没有壳文件夹包着）
- *     → 输出目录本身就是成品，整个搬回源目录。放在护栏之后：到护栏深度彻底收手。
- *  3. **单文件套壳**：解压出来只有一个文件，且它的后缀在你登记的伪装后缀里
+ *     → 输出目录本身就是成品，整个搬回源目录。
+ *  2. **单文件套壳**：解压出来只有一个文件，且它的后缀在你登记的伪装后缀里
  *     → 直接判定为"还要继续解"，**不再用 7-Zip 去试探**。
  *     资料包就是这么一层层套下来的（xxx.7z.001 → xxx.pdf → xxx.tif → …），
  *     一个文件一个壳，问 7-Zip 既慢又可能被加密头挡住。后缀是你自己登记的，
  *     等于你已经告诉过程序"这类后缀可能是套壳"，那就直接照做。
  *     （真不是压缩包也没关系：改名和删源包都只在解压成功后做，最多多一条失败记录。）
- *  4. 文件数 > 阈值（默认 3，可设置）→ 说明已经是正常内容，收手。
- *  5. 其余情况：7-Zip 严格校验，只有真能列出清单的压缩包才继续解
+ *  3. 文件数 > 阈值（默认 3，可设置）→ 说明已经是正常内容，收手。
+ *  4. 其余情况：7-Zip 严格校验，只有真能列出清单的压缩包才继续解
  *     —— 这一条挡住解压出来的真 jpg / pdf / 视频。
+ *  层数护栏已按用户要求移除：不再有深度上限，收手只看上面几条。
  */
 async function analyzeNestedArchives(request: NestedAnalyzeRequest): Promise<NestedAnalyzeResult> {
   const empty = (): NestedAnalyzeResult => ({
@@ -936,17 +938,35 @@ async function analyzeNestedArchives(request: NestedAnalyzeRequest): Promise<Nes
   //    → 这就是解到头的成品，不再往下解，改为把它搬回源目录。
   //    v2LwY 实测：顶层伪装包（v2LwY.json）解出「1 个目录含 2 项」，
   //    旧规则要求 depth≥1 导致成品埋在两层壳里不搬，用户明确要搬。
-  //    最外层搬的是「里面的那个目录」，壳（输出目录）在搬移后清掉，不会动源目录本身。
-  const top = await readTopEntries(request.folder);
-  if (top.length === 1 && top[0].isDirectory) {
-    const childCount = await countChildren(top[0].path);
+  //    M5170 实测：单链多层壳 M5170\M5170\M5170\巨乳\巨乳\{22 项} —— 每层里都
+  //    只有「1 个子目录」，单层判定看不到成品，最后漏到阈值收手，成品没人搬。
+  //    → 沿「纯目录单链」下钻：每层恰好 1 个子目录、0 个文件才继续，
+  //      直钻到第一个「多项目录」判成成品（混入任何文件就停，交给后续判定），
+  //      防止把正常的深层目录结构（game\save\…）误判成壳链。
+  let drillCur = request.folder;
+  let drillCount = 0;
+  for (;;) {
+    const level = await readTopEntries(drillCur);
+    if (!(level.length === 1 && level[0].isDirectory)) break;
+    const childCount = await countChildren(level[0].path);
     if (childCount > 1) {
+      const note =
+        drillCount === 0
+          ? `「${level[0].name}」里有 ${childCount} 项，是解到头的成品，不再往下解`
+          : `沿单链下钻 ${drillCount} 层后，「${level[0].name}」里有 ${childCount} 项，是解到头的成品，不再往下解`;
       return {
         ...empty(),
-        finishedFolder: top[0].path,
-        notes: [`「${top[0].name}」里有 ${childCount} 项，是解到头的成品，不再往下解`],
+        finishedFolder: level[0].path,
+        notes: [note],
       };
     }
+    const inner = await readTopEntries(level[0].path);
+    if (inner.length === 1 && inner[0].isDirectory && drillCount < 50) {
+      drillCur = level[0].path;
+      drillCount += 1;
+      continue;
+    }
+    break; // 内部为空、只有单个文件，或下钻过深 → 不是套壳链，交给后续判定
   }
 
   // 层数护栏已按用户要求移除：多深的链都继续解。
