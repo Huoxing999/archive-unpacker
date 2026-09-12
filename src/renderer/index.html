@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="zh-CN" data-page-node-id="5rOv3oepQVFQjWyCKXQXTF">
+  <head data-page-node-id="SKRD74MLYCKHAvaj7rD2HD">
+    <meta charset="UTF-8" data-page-node-id="vyMAXjKnyeukSO6nWDw32f" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="hgM9vZuiIWa96h4sWEKd7A" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:" data-page-node-id="IibDBFj70Et4TCTG3LHDms"
+    />
+    <title>批量解压工具</title>
+    <link rel="stylesheet" href="styles.css" data-page-node-id="a4UwihRnTJBvd0BPugtRO5" />
+  </head>
+  <body data-page-node-id="U70p5BYTClmoUFDib2gWNH">
+    <div class="app" data-page-node-id="um3Q1fzXTgfOLWydKkPKO8">
+      <header class="topbar" data-page-node-id="bx6ow6P3XZSEPqYD47YMu3">
+        <div class="brand" data-page-node-id="YswaTAUVvr9SgSMpxoQ9yS">
+          <div class="brand-mark" data-page-node-id="zrQDpexvozgMWdvoCR8n5w">AZ</div>
+          <span class="brand-name" data-page-node-id="ww4zn9zmJVktSmAFHw3Xik">批量解压</span>
+        </div>
+        <div class="topbar-right" data-page-node-id="BGdDOc3VjkBnQx7fiF9XED">
+          <span class="topbar-status" id="topbarStatus" data-page-node-id="THtPbgYEeR8qQe0f4G6Pqf">空闲</span>
+          <button id="settingsButton" class="gear-button" title="设置" data-page-node-id="X4i2IdFrWGTbKswRfKp3YM">设置</button>
+        </div>
+      </header>
+
+      <div class="workspace" data-page-node-id="TsViteD7CDhK8BduiEa6js">
+        <aside class="side-panel" data-page-node-id="nA9tlpdQo4oIffBPXXPskj">
+          <div class="field" data-page-node-id="sCbEb3WuuzBISUKCXrz45O">
+            <label for="sourceFolder" data-page-node-id="WULu3qR2ZkSM3JZP3jLbFP">压缩包文件夹</label>
+            <div class="input-line" data-page-node-id="49CR2IDa0dLW07GmqYqg4e">
+              <input id="sourceFolder" type="text" placeholder="选择文件夹后自动扫描" spellcheck="false" data-page-node-id="tNdPQDEHNAphvesp8S24rw" />
+              <button id="sourceBrowse" class="pick-button" data-page-node-id="DEsh8xdZ8Hp8ob8Y5cScjG">…</button>
+            </div>
+          </div>
+
+          <div class="field" data-page-node-id="aTC2U524pbAb25UmDOrWfY">
+            <label for="outputFolder" data-page-node-id="NKWjjACUT1wcPyOA4C5hl0">解压位置</label>
+            <div class="input-line" data-page-node-id="XK7D4NizaNiGGBETZy8AWG">
+              <input id="outputFolder" type="text" placeholder="默认与压缩包同一目录" spellcheck="false" data-page-node-id="zPvbGFEn7rGs9AB7pqIgAB" />
+              <button id="outputBrowse" class="pick-button" data-page-node-id="HsJkFEVck7dbPQIcrUKBeF">…</button>
+            </div>
+          </div>
+
+          <div class="field password-field" data-page-node-id="FuoR8wAZkuyXQQA0ffzgAz">
+            <label for="newPassword" data-page-node-id="W0dVYz8bPxhfwuktjZt4mF">候选密码 <span class="label-tip" data-page-node-id="4J3Tg2ESvZ7CIPr1zXbG6a">（可绑定文件名前缀）</span></label>
+            <div class="password-add-row" data-page-node-id="8dmDofRtpcFIVhhVbrAkmz">
+              <input id="newPassword" type="text" placeholder="密码" spellcheck="false" data-page-node-id="VQnNN2icIZAtHvcPf7Pr2x" />
+              <input id="newPrefix" class="prefix-input" type="text" placeholder="前缀" spellcheck="false" data-page-node-id="2gY7HHO2dluPUelMsQCJE1" />
+              <button id="addPassword" class="pick-button add-button wide-button" data-page-node-id="Jvr5GLYek5hE0pRV97n5Uc">新增密码</button>
+            </div>
+            <div id="passwordList" class="password-list" data-page-node-id="nh8Ffnd1ABViI9i6ORKW02"></div>
+            <div class="hint" data-page-node-id="2rg4kBSVYv4t8b3AkfdDMc">命中前缀的压缩包优先用该密码，失败后继续按顺序尝试其余密码。</div>
+          </div>
+        </aside>
+
+        <section class="list-panel" data-page-node-id="mboWnyLNx7TkyXSuv9IzRF">
+          <div class="list-header" data-page-node-id="JbIwx2Z0iommEO3jtGbypZ">
+            <label class="check" data-page-node-id="W0YA0QFjmC1WN9EXbwnDNN"><input id="selectAll" type="checkbox" data-page-node-id="pVIqsbgVsr4AM7TLFFk36T" />全选</label>
+            <span class="summary" id="summary" data-page-node-id="cLmUqnr3T5Ead64yK3tKXj">尚未扫描</span>
+            <button id="rescan" class="link-button" data-page-node-id="vtk4EqiVRxRsasxYwOSpBf">重新扫描</button>
+          </div>
+          <div class="archive-list" id="archiveRows" data-page-node-id="0BjuGeuEDzGDqnWuRb5rxU"></div>
+        </section>
+      </div>
+
+      <footer class="bottom-bar" data-page-node-id="Cu7fHGGeZ75fGeRkMUN8w8">
+        <div class="progress-row" id="progressRow" hidden>
+          <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+          <span class="progress-text" id="progressText"></span>
+        </div>
+        <div class="bottom-actions">
+          <button id="openOutput" class="bar-button" data-page-node-id="biW0qZ7wMlEP7upmCPcFuJ">打开输出</button>
+          <button id="stop" class="bar-button danger" data-page-node-id="X4b0MrbrmIzudM3H4QHwlE">停止</button>
+          <button id="start" class="bar-button primary" data-page-node-id="Mt1SmHWQXaBQGvkwxA3yIY">开始解压</button>
+        </div>
+      </footer>
+
+      <footer class="log-panel" data-page-node-id="UakOpyNPCA1EVn4uKXsAje">
+        <div class="log-header" data-page-node-id="tPR5ReCNC3mmA3lwyFtW7K">
+          <span data-page-node-id="k2mXEf8qm4ARvFkCEdm9mX">运行日志</span>
+          <button id="clearLog" class="link-button" data-page-node-id="bpqlcVkUV1nIkRuBmSNCmA">清空</button>
+        </div>
+        <div class="log-body" id="logBody" data-page-node-id="N4tGZ7MtI2yHa0UWeHnmsh"></div>
+      </footer>
+    </div>
+
+    <div class="modal-mask" id="settingsMask" hidden data-page-node-id="bTO2DW3oyzhx8gsSKV0NlI">
+      <div class="modal" data-page-node-id="oZofBOqGOuGMIsKxR4iwYs">
+        <div class="modal-head" data-page-node-id="lkpACedUYjnSMxjIz0v4mQ">
+          <span data-page-node-id="bbFDB9pvUSx2lxZgdcjQvK">设置</span>
+          <button id="settingsClose" class="modal-close" data-page-node-id="6B4gzjX8sB8tKsMLpOrwMF">×</button>
+        </div>
+
+        <div class="modal-body" data-page-node-id="RtQgjEuZcoCbMGBlcWsGva">
+          <div class="field" data-page-node-id="bzliwrxei1Wv8WvYF1FoJE">
+            <label data-page-node-id="mIuNg7OBHOBTx1vPu1TZFt">解压选项</label>
+            <label class="check" data-page-node-id="4wvDkE5wAzAlekZd2kXl7x"><input id="recursive" type="checkbox" checked data-page-node-id="ATtQwlkEaCrSUVySBVf32X" />包含子文件夹</label>
+            <label class="check" data-page-node-id="DSzQaZrQ3rHkdrkuibLGEk"><input id="separateDirs" type="checkbox" checked data-page-node-id="TL4VtV2Kg4NBAFmnkyCRUj" />每个包独立文件夹</label>
+            <div class="input-line" data-page-node-id="j2mtZihiNFWQKe5faBHKgd">
+              <span class="inline-label">嵌套解压阈值</span>
+              <input id="nestedFileThreshold" class="threshold-input" type="number" min="1" max="999" step="1" value="3" />
+              <span class="inline-label">个文件</span>
+            </div>
+            <div class="hint">解压出来的文件数<b>超过</b>这个值就不再往下解：一次只解出一两个文件的通常是"打包壳"（里面还套着包），值得继续解；一次解出好几个，就说明已经是正常内容了。<br />判定只看 7-Zip 的结果，不看后缀：真 jpg / pdf / 视频列不出清单，绝不会被再解一次；而套着 .pdf / .jpg 壳的真压缩包会被识别出来，照样继续往下解。</div>
+            <label class="check" data-page-node-id="0HwyWIrhxm4QiiWFx6FV3n"><input id="renameDisguised" type="checkbox" checked data-page-node-id="dAMpEtpi6NcxJK1IETbP7Q" />伪装后缀自动改名后解压</label>
+            <div class="input-line" data-page-node-id="z9Qk2mXr7LpVw3TfY8NcAb">
+              <span class="inline-label" data-page-node-id="q1Wm4ZxK8RtYu2PvBn7LdE">改名后缀</span>
+              <input id="renameExtension" list="renameExtensionOptions" type="text" placeholder="zip" spellcheck="false" data-page-node-id="m3Vt6YbN9KjXw5QdLz2Rs" />
+            </div>
+            <datalist id="renameExtensionOptions">
+              <option value="zip"></option>
+              <option value="rar"></option>
+              <option value="7z"></option>
+              <option value="tar"></option>
+              <option value="gz"></option>
+            </datalist>
+            <div class="hint" data-page-node-id="h5Cn8FpS2WqZr4MjKt6Vb">默认 zip。7-Zip 按文件头识别真实格式，所以这里只是改本地文件名，写 zip / rar / 7z 都能正常解压。</div>
+            <label class="check"><input id="deleteAfterExtract" type="checkbox" checked />解压完成后删除源压缩包（含分卷）</label>
+            <div class="hint">只在解压成功后删除；解压失败或密码错误时保留原文件。分卷会一并删除。</div>
+          </div>
+
+          <div class="field">
+            <label>扫描方式</label>
+            <label class="check"><input id="verifyWith7z" type="checkbox" />扫描时用 7-Zip 校验文件</label>
+            <div class="hint">
+              默认关闭：凡是你标记的伪装后缀，一律直接列出，不做判断。<br />
+              开启后会逐个调用 7-Zip 确认，非压缩包（尤其不带伪装后缀的）会被剔除，稍慢。
+            </div>
+          </div>
+
+          <div class="field" data-page-node-id="GlRcvP3Y1GmmDhA0fOCiHF">
+            <label for="sevenZip" data-page-node-id="XpN8FCLatEHVSc6nRtKDzi">7-Zip 路径</label>
+            <div class="input-line" data-page-node-id="ZuFAe5gg1dZm4uQKvz2kh5">
+              <input id="sevenZip" type="text" placeholder="自动检测或选择 7z.exe" spellcheck="false" data-page-node-id="wFCQQ749c7vrNA3mikpQvC" />
+              <button id="sevenZipBrowse" class="pick-button" data-page-node-id="NyrXGnzvgPtScg7pqVgHvM">…</button>
+            </div>
+            <div id="sevenZipHint" class="hint" data-page-node-id="BuJgs4N8FroEOrFP8EKU6s">正在检测 7-Zip...</div>
+          </div>
+
+          <div class="field" data-page-node-id="ApTBslAikUEVH6PuQaZyY1">
+            <label for="newExtension" data-page-node-id="0rZGeRTkIgCaRDA6dD381t">伪装后缀</label>
+            <div class="input-line" data-page-node-id="4EG014c87wgxGuM5sFu4li">
+              <input id="newExtension" type="text" placeholder="例如 png、jpg" spellcheck="false" data-page-node-id="UizJxl5NVpU2tk1JJmeQnG" />
+              <button id="addExtension" class="pick-button add-button" data-page-node-id="Vd0INBWD0JR0S5silhiDxt">+</button>
+            </div>
+            <div id="extensionList" class="tag-list" data-page-node-id="gvyhpYHJmZl9qGiA9BN08o"></div>
+            <div class="hint" data-page-node-id="xAbvUIXITliAJAsdTUWLEg">开启 7-Zip 校验时，由 7-Zip 判定这些后缀的文件是不是压缩包。</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="../../dist/renderer/renderer.js"></script>
+  </body>
+</html>
