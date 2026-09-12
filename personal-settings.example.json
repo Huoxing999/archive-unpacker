@@ -1,0 +1,24 @@
+{
+  "$说明": [
+    "个人配置模板。想让自己那份开箱即用，就把这个文件复制成 personal-settings.json 并填上你的值。",
+    "程序首次运行（本机还没有设置记录）时会读取 personal-settings.json 作为默认配置；",
+    "之后你在界面里改动的一切以本机记录为准，不会被这个文件覆盖。",
+    "personal-settings.json 已被 .gitignore 忽略，不会误传到公开仓库。"
+  ],
+  "settings": {
+    "recursive": true,
+    "separateDirs": true,
+    "nestedFileThreshold": 3,
+    "renameDisguised": true,
+    "renameExtension": "zip",
+    "deleteAfterExtract": true,
+    "verifyWith7z": true,
+    "sevenZipPath": "",
+    "sourceFolder": "",
+    "outputFolder": ""
+  },
+  "passwords": [
+    { "value": "在这里填候选密码", "prefix": "可选：只对文件名以此开头的包生效" }
+  ],
+  "disguisedExtensions": ["png", "mp4", "jpg"]
+}
