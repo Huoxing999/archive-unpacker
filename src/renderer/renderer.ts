@@ -201,6 +201,7 @@ const rescanButton = $<HTMLButtonElement>('rescan');
 const startButton = $<HTMLButtonElement>('start');
 const stopButton = $<HTMLButtonElement>('stop');
 const openOutputButton = $<HTMLButtonElement>('openOutput');
+const openExtractFolderButton = $<HTMLButtonElement>('openExtractFolder');
 const progressRow = $<HTMLDivElement>('progressRow');
 const progressFill = $<HTMLDivElement>('progressFill');
 const progressText = $<HTMLSpanElement>('progressText');
@@ -689,6 +690,7 @@ function updateButtons(): void {
   startButton.disabled = busy || items.length === 0;
   stopButton.disabled = !running;
   openOutputButton.disabled = !outputRoot();
+  openExtractFolderButton.disabled = !(outputInput.value.trim() || sourceInput.value.trim());
   setTopbar(true);
 }
 
@@ -1424,6 +1426,17 @@ openOutputButton.addEventListener('click', async () => {
   const result = await window.api.openPath(target);
   if (!result.ok) {
     appendLog('error', `无法打开输出目录：${result.error || '未知错误'}`);
+  }
+});
+
+openExtractFolderButton.addEventListener('click', async () => {
+  // 一键打开解压发生的根目录：解压位置优先（默认与压缩包同一目录，即源文件夹）。
+  // 与「打开输出」不同：这里永远指向一个真实存在的目录，不会因为空壳被清理而打不开。
+  const target = outputInput.value.trim() || sourceInput.value.trim();
+  if (!target) return;
+  const result = await window.api.openPath(target);
+  if (!result.ok) {
+    appendLog('error', `无法打开解压文件夹：${result.error || '未知错误'}`);
   }
 });
 
