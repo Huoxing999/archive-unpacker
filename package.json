@@ -10,6 +10,7 @@
         "check": "tsc -p tsconfig.main.json --noEmit && tsc -p tsconfig.renderer.json --noEmit",
         "verify": "npm run build && node scripts/verify-depth.cjs",
         "diagnose": "npm run build && node scripts/diagnose-nested.cjs",
+        "sync:asar": "node scripts/sync-asar.cjs",
         "demo:hoist": "npm run build && node scripts/demo-hoist.cjs",
         "probe:lz4": "npm run build && node scripts/probe-lz4.cjs",
         "pack": "npm run build && electron-builder --win portable --x64"
