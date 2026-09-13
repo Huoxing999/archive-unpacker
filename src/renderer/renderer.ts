@@ -1196,7 +1196,6 @@ async function startExtraction(): Promise<void> {
 
   const queue: RenderItem[] = batch.slice();
   const seenPaths = new Set<string>(queue.map((item) => item.path.toLowerCase()));
-  let nextIndex = 0;
   let inFlight = 0;
   let successCount = 0;
   let wrongCount = 0;
@@ -1222,16 +1221,36 @@ async function startExtraction(): Promise<void> {
 
   const sleep = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms));
 
+  // 同目录串行：同一个文件夹里的包不并发解压。
+  // 实测案例：2026S910S8.tif 与 2026S910S8.pdf 同目录且同名，并发时两个 7-Zip
+  // 互抢文件（pdf 解出的文件恰好和 tif 源文件同路径），报「另一个程序正在使用此文件」。
+  // 不同目录之间照常并发，不影响吞吐。
+  const runningDirs = new Set<string>();
+  const directoryOf = (p: string): string => {
+    const idx = Math.max(p.lastIndexOf('\\'), p.lastIndexOf('/'));
+    return (idx > 0 ? p.slice(0, idx) : p).toLowerCase();
+  };
+  const pickNext = (): { item: RenderItem; index: number } | null => {
+    for (let i = 0; i < queue.length; i++) {
+      const item = queue[i];
+      if (item.status !== 'pending') continue;
+      if (runningDirs.has(directoryOf(item.path))) continue;
+      item.status = 'running'; // 同步占位，防止其他 worker 重复拿到同一个任务
+      return { item, index: i };
+    }
+    return null;
+  };
+
   try {
     const workers = Array.from({ length: Math.min(CONCURRENCY, queue.length) }, async () => {
       while (!stopRequested) {
-        const index = nextIndex;
+        const picked = pickNext();
 
-        if (index < queue.length) {
-          nextIndex += 1;
+        if (picked) {
+          const item = picked.item;
+          runningDirs.add(directoryOf(item.path));
           inFlight += 1;
 
-          const item = queue[index];
           const result = await processItem(item);
 
           if (item.status === 'done') successCount += 1;
@@ -1250,6 +1269,7 @@ async function startExtraction(): Promise<void> {
             updateBatchProgress();
           }
 
+          runningDirs.delete(directoryOf(item.path));
           inFlight -= 1;
           continue;
         }
